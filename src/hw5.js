@@ -62,30 +62,40 @@ function defineLines(scene){
   center_line.position.y = 0.10;
   scene.add(center_line);
   
-  const three_point_radius = 7.4;
-  const three_point_segments = 50; //arbitrary
-  const left_three_line_segmants = [];
-  for (let i = 0; i <= three_point_segments; i++) {
-    const degree = Math.PI/2 - (Math.PI * i / three_point_segments);
-    const x_pos = -13 + three_point_radius * Math.cos(degree);
-    const z_pos = three_point_radius * Math.sin(degree);
-    left_three_line_segmants.push(new THREE.Vector3(x_pos, 0.11, z_pos));
-  }
-  const left_three_line_G = new THREE.BufferGeometry().setFromPoints(left_three_line_segmants);
-  const left_three_line = new THREE.Line(left_three_line_G, new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 5}));
-  scene.add(left_three_line);
+  createThreePointLines(scene, 7.5, true);
+  createThreePointLines(scene, 7.5, false);
+}
+
+function createThreePointLines(target_scene, arc_radius, is_left_side) {
+  const line_material = new THREE.LineBasicMaterial({ color: 0xffffff });
+  const segments_count = 50;
   
-  const right_three_line_segmants = [];
-  for (let i = 0; i <= three_point_segments; i++) {
-    const degree = Math.PI/2 + (Math.PI * i / three_point_segments);
-    const x_pos = 13 + three_point_radius * Math.cos(degree);
-    const z_pos = three_point_radius * Math.sin(degree);
-    right_three_line_segmants.push(new THREE.Vector3(x_pos, 0.11, z_pos));
+  let center_x_position;
+  let angle_direction;
+  
+  if (is_left_side) {
+    center_x_position = -13;
+    angle_direction = -1;
+  } else {
+    center_x_position = 13;
+    angle_direction = 1;
   }
   
-  const right_three_line_G = new THREE.BufferGeometry().setFromPoints(right_three_line_segmants);
-  const right_three_line = new THREE.Line(right_three_line_G, new THREE.LineBasicMaterial({ color: 0xffffff }));
-  scene.add(right_three_line);
+  const arc_points = [];
+  for (let point_index = 0; point_index <= segments_count; point_index++) {
+    const base_angle = Math.PI / 2;
+    const angle_offset = (Math.PI * point_index / segments_count) * angle_direction;
+    const current_angle = base_angle + angle_offset;
+    
+    const x_position = center_x_position + arc_radius * Math.cos(current_angle);
+    const z_position = arc_radius * Math.sin(current_angle);
+    
+    arc_points.push(new THREE.Vector3(x_position, 0.11, z_position));
+  }
+  
+  const arc_geometry = new THREE.BufferGeometry().setFromPoints(arc_points);
+  const three_point_line = new THREE.Line(arc_geometry, line_material);
+  target_scene.add(three_point_line);
 }
 
 function createHoop(target_scene, facing_right) {
