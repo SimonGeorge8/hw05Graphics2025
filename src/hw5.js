@@ -128,27 +128,29 @@ function createHoop(target_scene, facing_right) {
   pole_mesh.castShadow = true;
   target_scene.add(pole_mesh);
   
-  const horizontal_support = new THREE.Mesh(new THREE.BoxGeometry(arm_distance, 0.5, 0.5), new THREE.MeshPhongMaterial({ color: 0x4b4b4b }));
-  horizontal_support.position.set((support_x + hoop_x) / 2, rim_height + 2, hoop_z);
-  horizontal_support.castShadow = true;
-  target_scene.add(horizontal_support);
-  
   const basket_rim = new THREE.Mesh(new THREE.TorusGeometry(0.8, 0.05, 16, 32), new THREE.MeshPhongMaterial({ color: 0xff0000 }));
   basket_rim.position.set(hoop_x + rim_offset_x, rim_height, hoop_z);
   basket_rim.rotation.x = Math.PI / 2;
   basket_rim.castShadow = true;
   target_scene.add(basket_rim);
   
-  const string_material = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7});
+  const string_material = new THREE.MeshPhongMaterial({ 
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.8
+  });
   
-  for (let string_index = 0; string_index < 16; string_index++) {
-    const string_angle = (Math.PI * 2 / 16) * string_index;
-    const net_string = new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(hoop_x + rim_offset_x + Math.cos(string_angle) * 0.8, rim_height, hoop_z + Math.sin(string_angle) * 0.8),
-        new THREE.Vector3(hoop_x + rim_offset_x + Math.cos(string_angle) * 0.4, rim_height - 1.5, hoop_z + Math.sin(string_angle) * 0.4)]),
-      string_material);
-    target_scene.add(net_string);}
+  for (let string_num = 0; string_num < 30; string_num++) {
+    const angle = (Math.PI * 2 / 30) * string_num;
+    const string_x = hoop_x + rim_offset_x + Math.cos(angle) * 0.75;
+    const string_z = hoop_z + Math.sin(angle) * 0.75;
+    
+    const cylinder_geometry = new THREE.CylinderGeometry(0.03, 0.03, 1.2, 6);
+    const string_mesh = new THREE.Mesh(cylinder_geometry, string_material);
+    
+    string_mesh.position.set(string_x, rim_height - 0.6, string_z);
+    target_scene.add(string_mesh);
+  }
   
   const brace_length = Math.sqrt(arm_distance * arm_distance + 16);
   const diagonal_brace = new THREE.Mesh(new THREE.BoxGeometry(brace_length, 0.2, 0.2), new THREE.MeshPhongMaterial({ color: 0x444444 }));
