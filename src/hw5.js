@@ -172,30 +172,43 @@ function createHoop(target_scene, facing_right) {
 
 // create  basketball
 function createBasketball() {
-  const ball_G = new THREE.SphereGeometry(0.75, 32, 32);
+  const sphere_radius = 0.75;
+  const basketball_geometry = new THREE.SphereGeometry(sphere_radius, 32, 32);
+  const basketball_material = new THREE.MeshPhongMaterial({ 
+    color: 0xff8c00, 
+    shininess: 25 
+  });
   
-  const ball_M = new THREE.MeshPhongMaterial({ color: 0xffa500, shininess: 30 });
+  const basketball_mesh = new THREE.Mesh(basketball_geometry, basketball_material);
+  basketball_mesh.castShadow = true;
   
-  const ball = new THREE.Mesh(ball_G, ball_M);
-  ball.position.set(0, 3, 0);
-  ball.castShadow = true;
+  const seam_material = new THREE.MeshBasicMaterial({ color: 0x1a1a1a });
+  const seam_radius = sphere_radius + 0.01;
+  const seam_thickness = 0.025;
   
-  const line1G = new THREE.TorusGeometry(0.76, 0.02, 16, 32);
-  const line2G = new THREE.TorusGeometry(0.76, 0.02, 16, 32);
-  const line3G = new THREE.TorusGeometry(0.76, 0.02, 16, 32);
-  const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
-  const line1 = new THREE.Mesh(line1G, lineMaterial);
-  const line2 = new THREE.Mesh(line2G, lineMaterial);
-  const line3 = new THREE.Mesh(line3G, lineMaterial);
+  const horizontal_seam_geo = new THREE.TorusGeometry(seam_radius, seam_thickness, 12, 24);
+  const vertical_seam_1_geo = new THREE.TorusGeometry(seam_radius, seam_thickness, 12, 24);
+  const vertical_seam_2_geo = new THREE.TorusGeometry(seam_radius, seam_thickness, 12, 24);
   
-  line1.rotation.x = Math.PI / 2;
-  line2.rotation.y = Math.PI / 2;
+  const horizontal_seam = new THREE.Mesh(horizontal_seam_geo, seam_material);
+  const vertical_seam_1 = new THREE.Mesh(vertical_seam_1_geo, seam_material);
+  const vertical_seam_2 = new THREE.Mesh(vertical_seam_2_geo, seam_material);
   
-  ball.add(line1);
-  ball.add(line2);
-  ball.add(line3);
+  horizontal_seam.rotation.set(Math.PI / 2, 0, 0);
+  vertical_seam_1.rotation.set(0, Math.PI / 2, 0);
+  vertical_seam_2.rotation.set(0, 0, 0);
   
-  scene.add(ball);
+  const ball_group = new THREE.Group();
+  ball_group.add(basketball_mesh);
+  ball_group.add(horizontal_seam);
+  ball_group.add(vertical_seam_1);
+  ball_group.add(vertical_seam_2);
+  
+  ball_group.position.set(0, 3, 0);
+  
+  scene.add(ball_group);
+  
+  return ball_group;
 }
 
 // Create all elements
