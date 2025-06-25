@@ -12,8 +12,9 @@
 
 ## Group Members
 **MANDATORY: Add the full names of all group members here:**
-- [Member 1 Full Name]
-- [Member 2 Full Name]
+- Oron Paz
+- Simon Abadi
+- Jesse Bondi
 
 ## Technical Details
 - Run the server with: `node index.js`

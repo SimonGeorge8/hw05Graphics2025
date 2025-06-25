@@ -250,6 +250,40 @@ instructionsElement.innerHTML = `
 `;
 document.body.appendChild(instructionsElement);
 
+const powerBarContainer = document.createElement('div');
+powerBarContainer.style.position = 'absolute';
+powerBarContainer.style.bottom = '20px';
+powerBarContainer.style.right = '20px';
+powerBarContainer.style.width = '30px';
+powerBarContainer.style.height = '150px';
+powerBarContainer.style.border = '2px solid white';
+powerBarContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+document.body.appendChild(powerBarContainer);
+
+const powerBar = document.createElement('div');
+powerBar.style.position = 'absolute';
+powerBar.style.bottom = '0';
+powerBar.style.width = '100%';
+powerBar.style.backgroundColor = 'green';
+powerBar.style.height = '50%'; // Static power level for HW05
+powerBarContainer.appendChild(powerBar);
+
+const scoreElement = document.createElement('div');
+scoreElement.style.position = 'absolute'
+scoreElement.style.bottom = '500px';
+scoreElement.style.right = '40%';
+scoreElement.style.width = '200px';
+scoreElement.style.color = 'white';
+scoreElement.style.fontSize = '16px';
+scoreElement.style.fontFamily = 'Arial, sans-serif';
+scoreElement.style.height = '150px';
+scoreElement.innerHTML = `
+  <h3>Score:</h3>
+  <p>0-0</p>
+`;
+document.body.appendChild(scoreElement);
+
+
 // Handle key events
 function handleKeyDown(e) {
   if (e.key === "o" || e.key === "O") {
