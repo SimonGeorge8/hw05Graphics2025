@@ -289,7 +289,7 @@ function updatePhysics(deltaTime) {
   ballPosition.y += ballVelocity.y * deltaTime;
   ballPosition.z += ballVelocity.z * deltaTime;
   
-  // Check backboard collisions
+  // Check backboard and rim collisions
   checkBackboardCollision(prevPosition);
   
   // Court boundary collisions with bouncing
@@ -327,14 +327,14 @@ function updatePhysics(deltaTime) {
     bounceCount++; // Increment bounce counter
     console.log('Ball bounced! Count:', bounceCount, 'New velocity:', ballVelocity);
     
-    // Reset ball after 4 bounces - this counts as a missed shot
+    // Reset ball after 4 bounces - ONLY WAY TO MISS NOW
     if (bounceCount >= 4) {
       console.log('Ball reset after 4 bounces - MISSED SHOT');
       isInFlight = false;
       ballVelocity.set(0, 0, 0);
       bounceCount = 0;
       
-      // Count as missed shot if it was an active shot attempt
+      // Count as missed shot ONLY if it was an active shot attempt
       if (gameMessage === "Shot taken!") {
         gameMessage = "MISSED SHOT - 4 bounces";
         setTimeout(() => {
@@ -347,23 +347,18 @@ function updatePhysics(deltaTime) {
       return;
     }
     
-    // Stop ball if velocity is too low
+    // Stop ball if velocity is too low - but DON'T count as miss
     if (Math.abs(ballVelocity.y) < 1.2 && 
         Math.abs(ballVelocity.x) < 0.8 && 
         Math.abs(ballVelocity.z) < 0.8) {
       isInFlight = false;
       ballVelocity.set(0, 0, 0);
       bounceCount = 0;
-      console.log('Ball stopped');
+      console.log('Ball stopped - no miss counted');
       
-      // Count as missed shot if it was an active shot attempt
+      // Just clear the shot message, don't count as miss
       if (gameMessage === "Shot taken!") {
-        gameMessage = "MISSED SHOT";
-        setTimeout(() => {
-          if (gameMessage === "MISSED SHOT") {
-            gameMessage = "";
-          }
-        }, 2000);
+        gameMessage = "";
         updateUI();
       }
     }
@@ -404,9 +399,9 @@ function checkBackboardCollision(prevPosition) {
   if ((prevPosition.x > -13.5 && ballPosition.x <= -13.5) || 
       (prevPosition.x < -12.5 && ballPosition.x >= -12.5)) {
     if (ballPosition.y >= 8 && ballPosition.y <= 12 && Math.abs(ballPosition.z) <= 3.5) {
-      ballVelocity.x = -ballVelocity.x * 0.6;
+      ballVelocity.x = -ballVelocity.x * 0.8; // Better bounce retention
       ballPosition.x = prevPosition.x; // Reset to previous safe position
-      console.log('Left backboard collision!');
+      console.log('Left backboard collision! Velocity:', ballVelocity);
     }
   }
   
@@ -414,9 +409,30 @@ function checkBackboardCollision(prevPosition) {
   if ((prevPosition.x < 13.5 && ballPosition.x >= 13.5) || 
       (prevPosition.x > 12.5 && ballPosition.x <= 12.5)) {
     if (ballPosition.y >= 8 && ballPosition.y <= 12 && Math.abs(ballPosition.z) <= 3.5) {
-      ballVelocity.x = -ballVelocity.x * 0.6;
+      ballVelocity.x = -ballVelocity.x * 0.8; // Better bounce retention
       ballPosition.x = prevPosition.x; // Reset to previous safe position
-      console.log('Right backboard collision!');
+      console.log('Right backboard collision! Velocity:', ballVelocity);
+    }
+  }
+  
+  // Check rim collision for bouncing (not just scoring)
+  for (let rimPos of rimPositions) {
+    const horizontalDistance = Math.sqrt(
+      Math.pow(ballPosition.x - rimPos.x, 2) + 
+      Math.pow(ballPosition.z - rimPos.z, 2)
+    );
+    
+    // Ball hits rim - bounce off
+    if (horizontalDistance <= 1.0 && Math.abs(ballPosition.y - rimPos.y) <= 0.5) {
+      // Bounce ball away from rim center
+      const rimDirection = new THREE.Vector3().subVectors(ballPosition, rimPos).normalize();
+      
+      // Apply bounce effect
+      ballVelocity.x += rimDirection.x * 3;
+      ballVelocity.z += rimDirection.z * 3;
+      ballVelocity.y *= 0.7; // Reduce vertical velocity
+      
+      console.log('Rim collision bounce! New velocity:', ballVelocity);
     }
   }
 }
@@ -431,7 +447,7 @@ function checkScoring() {
       Math.pow(ballPosition.z - rimPos.z, 2)
     );
     
-    // Score ONLY when ball hits rim while arcing downward (assignment requirement)
+    // Score ONLY when ball hits rim while arcing downward - no other miss conditions
     if (horizontalDistance <= 1.2 && gameMessage === "Shot taken!" && ballVelocity.y < -1) { 
       score += 2;
       shotsMade++;
@@ -451,6 +467,12 @@ function checkScoring() {
       
       updateUI();
       return;
+    }
+    
+    // If ball hits rim but not arcing downward, just let it continue - no miss message
+    if (horizontalDistance <= 1.2 && gameMessage === "Shot taken!") {
+      console.log('Ball hit rim but not arcing downward - continuing play');
+      // Ball continues with physics, no scoring, no miss message
     }
   }
 }
@@ -479,9 +501,9 @@ function shootBasketball() {
   const horizontalDistance = Math.sqrt(direction.x * direction.x + direction.z * direction.z);
   const heightDifference = direction.y;
   
-  // Increased physics speed for even faster gameplay
+  // Better velocity calculation
   const powerMultiplier = shotPower / 100;
-  const baseVelocity = 12 + (powerMultiplier * 15); // Increased from 18+12 to 25+15
+  const baseVelocity = 12 + (powerMultiplier * 15); // Changed back as requested
   
   // Calculate launch angle for nice arc (30-60 degrees based on distance and power)
   const distanceFactor = Math.min(horizontalDistance / 20, 1);
@@ -503,19 +525,7 @@ function shootBasketball() {
   
   gameMessage = "Shot taken!";
   
-  // Timeout for missed shot - but this can be overridden by 4-bounce miss or scoring
-  setTimeout(() => {
-    if (gameMessage === "Shot taken!") {
-      gameMessage = "MISSED SHOT";
-      setTimeout(() => {
-        if (gameMessage === "MISSED SHOT") {
-          gameMessage = "";
-        }
-      }, 2000);
-      updateUI();
-    }
-  }, 4000);
-  
+  // No more timeout misses - only 4-bounce misses or scores
   updateUI();
 }
 
