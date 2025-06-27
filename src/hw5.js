@@ -1,4 +1,3 @@
-// Game scoring system
 let totalScore = 0;
 import {OrbitControls} from './OrbitControls.js'
 
@@ -8,10 +7,8 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
-// Set background color to light blue sky
-scene.background = new THREE.Color(0x87CEEB); // Sky blue
+scene.background = new THREE.Color(0x87CEEB); // background color (sky)
 
-// Add lights to the scene
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
 scene.add(ambientLight);
 
@@ -19,7 +16,6 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
 directionalLight.position.set(10, 20, 15);
 scene.add(directionalLight);
 
-// Enable shadows
 renderer.shadowMap.enabled = true;
 directionalLight.castShadow = true;
 
@@ -28,7 +24,6 @@ function degrees_to_radians(degrees) {
   return degrees * (pi/180);
 }
 
-// Global variable for scoreboard text
 let scoreboardTextMesh;
 
 // Create basketball court
@@ -50,11 +45,9 @@ function createBasketballCourt() {
   createHoop(scene, false);  //right hoop (its all about perspective tho if you really think about it)
 
   createBasketball();
-  
-  // NEW: Create stadium environment
+
   createStadium();
   
-  // NEW: Create scoreboard
   createScoreboard();
 }
 
@@ -235,34 +228,29 @@ function createBasketball() {
   basketball = ball_group;
 }
 
-// NEW: Create stadium environment
 function createStadium() {
-  // Large oval stadium floor (much bigger than court)
-  const stadiumFloor = new THREE.Mesh(
-    new THREE.CylinderGeometry(60, 60, 1, 32), // Large oval base
-    new THREE.MeshPhongMaterial({ color: 0x3c3c3c })
-  );
+  const stadiumFloor = new THREE.Mesh(new THREE.CylinderGeometry(60, 60, 1, 32), new THREE.MeshPhongMaterial({ color: 0x3c3c3c }));
   stadiumFloor.position.y = -0.5;
   stadiumFloor.receiveShadow = true;
   scene.add(stadiumFloor);
   
-  // Create bleachers only on the SIDES (left and right of the hoops)
   // Left side bleachers (behind left hoop)
   for (let tier = 0; tier < 8; tier++) {
-    const seatGeometry = new THREE.BoxGeometry(2, 1, 40); // Wide, tall, long bleachers
+    const seatGeometry = new THREE.BoxGeometry(2, 1, 40); 
     const seatMaterial = new THREE.MeshPhongMaterial({ 
-      color: tier % 2 === 0 ? 0x4a5568 : 0x2d3748 // Alternating colors
+      color: tier % 2 === 0 ? 0x4a5568 : 0x2d3748 
     });
     const seats = new THREE.Mesh(seatGeometry, seatMaterial);
     
-    seats.position.x = -20 - tier; // Positioned to the left, going outward
-    seats.position.z = 0; // Centered on court
-    seats.position.y = tier; // Rising upward
+    seats.position.x = -20 - tier; 
+    seats.position.z = 0; 
+    seats.position.y = tier; 
     
     seats.castShadow = true;
     scene.add(seats);
   }
 
+  // Front side bleachers (infront of camera when opening page)
   for (let tier = 0; tier < 8; tier++) {
     const seatGeometry = new THREE.BoxGeometry(40, 2, 1);
     const seatMaterial = new THREE.MeshPhongMaterial({ 
@@ -270,9 +258,9 @@ function createStadium() {
     });
     const seats = new THREE.Mesh(seatGeometry, seatMaterial);
     
-    seats.position.x = 0; // Centered on court
-    seats.position.z = -20 - tier; // POSITIVE Z = in front of camera
-    seats.position.y = tier; // Rising upward
+    seats.position.x = 0; 
+    seats.position.z = -20 - tier; 
+    seats.position.y = tier; 
     
     seats.castShadow = true;
     scene.add(seats);
@@ -286,23 +274,21 @@ function createStadium() {
     });
     const seats = new THREE.Mesh(seatGeometry, seatMaterial);
     
-    seats.position.x = 20 + tier; // Positioned to the right, going outward
-    seats.position.z = 0; // Centered on court
-    seats.position.y = tier; // Rising upward
+    seats.position.x = 20 + tier;
+    seats.position.z = 0; 
+    seats.position.y = tier; 
     
     seats.castShadow = true;
     scene.add(seats);
   }
 }
 
-// NEW: Create T-shaped scoreboard
 function createScoreboard() {
-  // Position the scoreboard in front of the bleachers in -z direction
-  const scoreboardX = 0; // Centered
-  const scoreboardY = 12; // High up
-  const scoreboardZ = -32; // In front of the bleachers (which start at -20)
+  const scoreboardX = 0; 
+  const scoreboardY = 12; 
+  const scoreboardZ = -32; 
   
-  // Create the vertical post (T stem)
+  // vertical post 
   const postGeometry = new THREE.CylinderGeometry(0.5, 0.5, 15, 16);
   const postMaterial = new THREE.MeshPhongMaterial({ color: 0x2c2c2c });
   const post = new THREE.Mesh(postGeometry, postMaterial);
@@ -310,10 +296,10 @@ function createScoreboard() {
   post.castShadow = true;
   scene.add(post);
   
-  // Create the horizontal board (T top)
+  // horizontal board (T top)
   const boardGeometry = new THREE.BoxGeometry(12, 4, 1);
   const boardMaterial = new THREE.MeshPhongMaterial({ 
-    color: 0x1a1a1a, // Dark background
+    color: 0x1a1a1a, 
     shininess: 10
   });
   const board = new THREE.Mesh(boardGeometry, boardMaterial);
@@ -321,7 +307,6 @@ function createScoreboard() {
   board.castShadow = true;
   scene.add(board);
   
-  // Create a border around the scoreboard
   const borderGeometry = new THREE.BoxGeometry(12.5, 4.5, 0.8);
   const borderMaterial = new THREE.MeshPhongMaterial({ color: 0x444444 });
   const border = new THREE.Mesh(borderGeometry, borderMaterial);
@@ -329,76 +314,57 @@ function createScoreboard() {
   border.castShadow = true;
   scene.add(border);
   
-  // Create LED-style background panels
   for (let i = 0; i < 4; i++) {
     const ledPanelGeometry = new THREE.BoxGeometry(2.5, 3, 0.2);
-    const ledPanelMaterial = new THREE.MeshPhongMaterial({ 
-      color: 0x001100, // Dark green LED background
-      emissive: 0x002200
-    });
+    const ledPanelMaterial = new THREE.MeshPhongMaterial({color: 0x001100, emissive: 0x002200});
     const ledPanel = new THREE.Mesh(ledPanelGeometry, ledPanelMaterial);
     ledPanel.position.set(scoreboardX + (i - 1.5) * 3, scoreboardY + 2, scoreboardZ + 0.6);
     scene.add(ledPanel);
   }
   
-  // Create the initial score text
   updateScoreboardDisplay(0);
 }
 
-// NEW: Function to update scoreboard display
 function updateScoreboardDisplay(score) {
-  // Remove existing text if it exists
   if (scoreboardTextMesh) {
     scene.remove(scoreboardTextMesh);
   }
   
-  // Create a canvas to draw the text
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
   canvas.width = 512;
   canvas.height = 128;
   
-  // Set up the text style
-  context.fillStyle = '#000000'; // Black background
+  context.fillStyle = '#000000'; 
   context.fillRect(0, 0, canvas.width, canvas.height);
   
-  context.fillStyle = '#00FF00'; // Bright green LED color
+  context.fillStyle = '#00FF00';
   context.font = 'bold 80px Arial';
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   
-  // Add a glow effect
+  //glow effect
   context.shadowColor = '#00FF00';
   context.shadowBlur = 10;
   
-  // Draw the score
-  const scoreText = score.toString().padStart(2, '0'); // Pad with leading zero if needed
+  const scoreText = score.toString().padStart(2, '0'); 
   context.fillText(scoreText, canvas.width / 2, canvas.height / 2);
   
-  // Create texture from canvas
   const texture = new THREE.CanvasTexture(canvas);
   texture.needsUpdate = true;
   
-  // Create material and mesh
-  const textMaterial = new THREE.MeshPhongMaterial({ 
-    map: texture,
-    transparent: true,
-    emissive: 0x003300, // Slight green glow
-    emissiveIntensity: 0.3
-  });
+  const textMaterial = new THREE.MeshPhongMaterial({map: texture, transparent: true, emissive: 0x003300, emissiveIntensity: 0.3});
   
   const textGeometry = new THREE.PlaneGeometry(10, 2.5);
   scoreboardTextMesh = new THREE.Mesh(textGeometry, textMaterial);
   
-  // Position the text on the scoreboard
-  scoreboardTextMesh.position.set(0, 14, -30); // Slightly in front of the board
+  scoreboardTextMesh.position.set(0, 14, -30); // put text in front of the board
   scene.add(scoreboardTextMesh);
 }
 
-// Create all elements
+// Create the elements
 createBasketballCourt();
 
-// Set camera position for better view
 const cameraTranslate = new THREE.Matrix4();
 cameraTranslate.makeTranslation(0, 15, 30);
 camera.applyMatrix4(cameraTranslate);
@@ -407,9 +373,7 @@ camera.applyMatrix4(cameraTranslate);
 const controls = new OrbitControls(camera, renderer.domElement);
 let isOrbitEnabled = true;
 
-// ============== HW06 NEW FEATURES ==============
-
-// Game statistics tracking
+//track stats
 const gameStats = {
     totalScore: 0,
     shotsAttempted: 0,
@@ -417,7 +381,7 @@ const gameStats = {
     shootingPercentage: 0.0
 };
 
-// Basketball physics system
+// physics system
 const ballPhysics = {
     currentPos: new THREE.Vector3(0, 3, 0),
     velocity: new THREE.Vector3(0, 0, 0),
@@ -430,25 +394,22 @@ const ballPhysics = {
     bounceCounter: 0,
     maxBounceLimit: 9,
     lastScoredTime: 0,
-    shotInProgress: false // NEW: Track if we're in the middle of a shot attempt
+    shotInProgress: false
 };
 
-// NEW: Ball rotation system
 const ballRotation = {
     previousPosition: new THREE.Vector3(0, 3, 0),
     rotationMultiplier: 0.1
 };
 
-// NEW: Confetti system
+// confetti for succesful shot
 const confettiParticles = [];
 
-// Hoop positions for collision detection
 const hoopTargets = [
     { x: -12, y: 10, z: 0, radius: 0.8 },
     { x: 12, y: 10, z: 0, radius: 0.8 }
 ];
 
-// Score display UI
 const scoreDisplay = document.createElement('div');
 scoreDisplay.style.position = 'absolute';
 scoreDisplay.style.top = '25px';
@@ -510,7 +471,7 @@ powerLevel.style.height = ballPhysics.shotStrength * 100 + '%';
 powerLevel.style.borderRadius = '0 0 1px 1px';
 powerIndicator.appendChild(powerLevel);
 
-// NEW: Celebration text display
+// celebration display
 const celebrationText = document.createElement('div');
 celebrationText.style.position = 'absolute';
 celebrationText.style.top = '50%';
@@ -529,34 +490,24 @@ document.body.appendChild(celebrationText);
 
 function updatePowerDisplay() {
     powerLevel.style.height = ballPhysics.shotStrength * 100 + '%';
-    
-    // Color coding for power level
-    if (ballPhysics.shotStrength < 0.4) {
-        powerLevel.style.backgroundColor = 'blue';
-    } else if (ballPhysics.shotStrength < 0.75) {
-        powerLevel.style.backgroundColor = 'green';
-    } else {
-        powerLevel.style.backgroundColor = 'red';
-    }
+    powerLevel.style.backgroundColor = 'green';
 }
 
 function launchBasketball() {
-    // Determine target hoop based on ball position
+    //determaine which hoop to shoot at based on position
     let targetHoop;
     if (basketball.position.x < 0) {
-        targetHoop = hoopTargets[1]; // Right hoop
+        targetHoop = hoopTargets[1]; //right
     } else {
-        targetHoop = hoopTargets[0]; // Left hoop
+        targetHoop = hoopTargets[0]; // left 
     }
     
-    // Calculate trajectory to target
     const trajectoryVector = new THREE.Vector3(
         targetHoop.x - basketball.position.x,
-        targetHoop.y + 2.5 - basketball.position.y, // Aim above rim
+        targetHoop.y + 2.5 - basketball.position.y, 
         targetHoop.z - basketball.position.z
     ).normalize();
     
-    // Apply shot strength to velocity
     ballPhysics.velocity.x = trajectoryVector.x * ballPhysics.shotStrength * 3;
     ballPhysics.velocity.y = trajectoryVector.y * ballPhysics.shotStrength * 3;
     ballPhysics.velocity.z = trajectoryVector.z * ballPhysics.shotStrength * 3;
@@ -564,26 +515,21 @@ function launchBasketball() {
     ballPhysics.isLaunched = true;
     ballPhysics.isPlayerControlled = false;
     ballPhysics.bounceCounter = 0;
-    ballPhysics.shotInProgress = true; // NEW: Mark that we're attempting a shot
+    ballPhysics.shotInProgress = true; 
     
-    // Update shot attempts
     gameStats.shotsAttempted++;
     document.getElementById('totalAttempts').textContent = gameStats.shotsAttempted;
 }
 
 function resetBasketball() {
-    // NEW: Check if this was a missed shot and update accuracy
     if (ballPhysics.shotInProgress) {
-        // Shot was in progress but we're resetting = missed shot
-        // (shotsMade already updated in detectScoringCollision if it was made)
         gameStats.shootingPercentage = (gameStats.shotsMade / gameStats.shotsAttempted * 100).toFixed(1);
         document.getElementById('accuracy').textContent = gameStats.shootingPercentage;
-        
         ballPhysics.shotInProgress = false;
     }
-    
+  
     basketball.position.set(0, 3, 0);
-    basketball.rotation.set(0, 0, 0); // Reset rotation
+    basketball.rotation.set(0, 0, 0); 
     ballPhysics.currentPos.set(0, 3, 0);
     ballPhysics.velocity.set(0, 0, 0);
     ballPhysics.isLaunched = false;
@@ -597,26 +543,24 @@ function detectScoringCollision() {
         const hoopPosition = new THREE.Vector3(hoop.x, hoop.y, hoop.z);
         const ballDistance = hoopPosition.distanceTo(basketball.position);
         
-        // Check if ball passes through hoop area
+        // check if score should count based on hoop/rim positon
         if (ballDistance < hoop.radius + 0.3 && 
             Math.abs(basketball.position.y - hoop.y) < 0.8 && 
             Math.abs(ballPhysics.lastScoredTime - Date.now()) > 3000) {
             
-            // Successful shot!
+            // successful shot :)
             totalScore += 2;
             gameStats.totalScore += 2;
             gameStats.shotsMade++;
             gameStats.shootingPercentage = (gameStats.shotsMade / gameStats.shotsAttempted * 100).toFixed(1);
-            ballPhysics.shotInProgress = false; // NEW: Shot completed successfully
+            ballPhysics.shotInProgress = false; 
 
             celebrateShot();
             
-            // Update displays
             document.getElementById('currentScore').textContent = gameStats.totalScore;
             document.getElementById('totalMade').textContent = gameStats.shotsMade;
             document.getElementById('accuracy').textContent = gameStats.shootingPercentage;
             
-            // NEW: Update scoreboard display
             updateScoreboardDisplay(gameStats.shotsMade);
             
             ballPhysics.lastScoredTime = Date.now();
@@ -624,19 +568,16 @@ function detectScoringCollision() {
     }
 }
 
-// NEW: Enhanced celebration function
+// celebrate shot function with confetti
 function celebrateShot() {
-    // Show celebration text
     celebrationText.style.opacity = '1';
     setTimeout(() => {
         celebrationText.style.opacity = '0';
     }, 2000);
     
-    // Create confetti
     createConfetti();
 }
 
-// NEW: Confetti creation function
 function createConfetti() {
     const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
     
@@ -665,14 +606,13 @@ function createConfetti() {
     }
 }
 
-// NEW: Update confetti animation
 function updateConfetti() {
     for (let i = confettiParticles.length - 1; i >= 0; i--) {
         const particle = confettiParticles[i];
         
         particle.x += particle.vx;
         particle.y += particle.vy;
-        particle.vy += 0.1; // Gravity
+        particle.vy += 0.1; 
         particle.life--;
         
         particle.element.style.left = particle.x + 'px';
@@ -686,29 +626,23 @@ function updateConfetti() {
     }
 }
 
-// ENHANCED: Physics simulation with ball rotation
 function simulatePhysics() {
     if (!ballPhysics.isLaunched) {
-        // Handle manual movement when player controlled
         if (ballPhysics.horizontalDirection !== 0 || ballPhysics.verticalDirection !== 0) {
-            // Store previous position for rotation calculation
             ballRotation.previousPosition.copy(basketball.position);
             
             basketball.position.x += ballPhysics.horizontalDirection * 0.15;
             basketball.position.z += ballPhysics.verticalDirection * 0.15;
             
-            // Keep within court boundaries
             basketball.position.x = Math.max(-14, Math.min(14, basketball.position.x));
             basketball.position.z = Math.max(-7, Math.min(7, basketball.position.z));
             
             ballPhysics.currentPos.copy(basketball.position);
             
-            // NEW: Calculate rotation for manual movement
             const movementVector = new THREE.Vector3()
                 .subVectors(basketball.position, ballRotation.previousPosition);
             
             if (movementVector.length() > 0) {
-                // Rotate ball based on movement direction
                 basketball.rotation.x += -movementVector.z * ballRotation.rotationMultiplier * 8;
                 basketball.rotation.z += movementVector.x * ballRotation.rotationMultiplier * 8;
             }
@@ -716,35 +650,28 @@ function simulatePhysics() {
         return;
     }
     
-    // Apply gravity to velocity
     ballPhysics.velocity.add(ballPhysics.gravity);
     
-    // Update position
     ballPhysics.currentPos.add(ballPhysics.velocity);
     basketball.position.copy(ballPhysics.currentPos);
     
-    // NEW: Enhanced ball rotation animation during flight
     const velocityMagnitude = ballPhysics.velocity.length();
     if (velocityMagnitude > 0) {
-        // Basketball rotation based on movement - more visible rotation
-        basketball.rotation.x += ballPhysics.velocity.z * 0.3;  // Increased from 0.1
-        basketball.rotation.z -= ballPhysics.velocity.x * 0.3;  // Increased from 0.1
+        basketball.rotation.x += ballPhysics.velocity.z * 0.3;  
+        basketball.rotation.z -= ballPhysics.velocity.x * 0.3; 
         
-        // Add backspin (common in basketball shots) - rotate around X axis
-        basketball.rotation.x += velocityMagnitude * 0.15;  // Creates backspin effect
+        basketball.rotation.x += velocityMagnitude * 0.15;  
         
-        // Add some side spin based on horizontal movement
         basketball.rotation.y += ballPhysics.velocity.x * 0.1;
     }
     
-    // Ground collision detection
     if (ballPhysics.currentPos.y < 1.5 && ballPhysics.velocity.y < 0) {
-        ballPhysics.velocity.y = -ballPhysics.velocity.y * 0.6; // Bounce with energy loss
-        ballPhysics.velocity.x *= 0.85; // Friction
-        ballPhysics.velocity.z *= 0.85; // Friction
+        ballPhysics.velocity.y = -ballPhysics.velocity.y * 0.6; // energy loss
+        ballPhysics.velocity.x *= 0.85; // friction
+        ballPhysics.velocity.z *= 0.85; // friction
         ballPhysics.bounceCounter++;
         
-        // Stop after max bounces or low velocity
+        // reset after max bounces or low velocity
         if (ballPhysics.bounceCounter > ballPhysics.maxBounceLimit || 
            (Math.abs(ballPhysics.velocity.x) < 0.02 && 
             Math.abs(ballPhysics.velocity.z) < 0.02 && 
@@ -753,7 +680,7 @@ function simulatePhysics() {
         }
     }
     
-    // Wall collision detection
+    // wall collision (bakcboard or sides)
     if (Math.abs(ballPhysics.currentPos.x) > 13 && 
         Math.sign(ballPhysics.currentPos.x) === Math.sign(ballPhysics.velocity.x)) {
         ballPhysics.velocity.x = -ballPhysics.velocity.x * 0.6;
@@ -764,17 +691,14 @@ function simulatePhysics() {
         ballPhysics.velocity.z = -ballPhysics.velocity.z * 0.6;
     }
     
-    // Check for scoring
     detectScoringCollision();
 }
 
-// Input handling for HW06
 function handleKeyPressed(event) {
     if (event.key === "o" || event.key === "O") {
         isOrbitEnabled = !isOrbitEnabled;
     }
     
-    // Movement controls (only when player controlled)
     if (ballPhysics.isPlayerControlled) {
         if (event.key === "ArrowLeft") {
             ballPhysics.horizontalDirection = -1;
@@ -786,7 +710,6 @@ function handleKeyPressed(event) {
             ballPhysics.verticalDirection = 1;
         }
         
-        // Power adjustment
         if (event.key === "w" && ballPhysics.shotStrength < 1.0) {
             ballPhysics.shotStrength += 0.04;
             updatePowerDisplay();
@@ -795,13 +718,11 @@ function handleKeyPressed(event) {
             updatePowerDisplay();
         }
         
-        // Launch ball
         if (event.key === " ") {
             launchBasketball();
         }
     }
     
-    // Reset (available anytime)
     if (event.key === "r" || event.key === "R") {
         resetBasketball();
     }
@@ -822,13 +743,10 @@ document.addEventListener('keyup', handleKeyReleased);
 function animate() {
     requestAnimationFrame(animate);
     
-    // Update basketball physics
     simulatePhysics();
     
-    // NEW: Update confetti animation
     updateConfetti();
     
-    // Update controls
     controls.enabled = isOrbitEnabled;
     controls.update();
     
