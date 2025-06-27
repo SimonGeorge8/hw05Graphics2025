@@ -1,5 +1,6 @@
 // Game scoring system
-let totalScore = 0;import {OrbitControls} from './OrbitControls.js'
+let totalScore = 0;
+import {OrbitControls} from './OrbitControls.js'
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -27,6 +28,9 @@ function degrees_to_radians(degrees) {
   return degrees * (pi/180);
 }
 
+// Global variable for scoreboard text
+let scoreboardTextMesh;
+
 // Create basketball court
 function createBasketballCourt() {
   // Court floor
@@ -49,6 +53,9 @@ function createBasketballCourt() {
   
   // NEW: Create stadium environment
   createStadium();
+  
+  // NEW: Create scoreboard
+  createScoreboard();
 }
 
 function defineLines(scene){
@@ -269,7 +276,7 @@ function createStadium() {
     
     seats.castShadow = true;
     scene.add(seats);
-}
+  }
   
   // Right side bleachers (behind right hoop)
   for (let tier = 0; tier < 8; tier++) {
@@ -286,9 +293,107 @@ function createStadium() {
     seats.castShadow = true;
     scene.add(seats);
   }
-  
 }
 
+// NEW: Create T-shaped scoreboard
+function createScoreboard() {
+  // Position the scoreboard in front of the bleachers in -z direction
+  const scoreboardX = 0; // Centered
+  const scoreboardY = 12; // High up
+  const scoreboardZ = -32; // In front of the bleachers (which start at -20)
+  
+  // Create the vertical post (T stem)
+  const postGeometry = new THREE.CylinderGeometry(0.5, 0.5, 15, 16);
+  const postMaterial = new THREE.MeshPhongMaterial({ color: 0x2c2c2c });
+  const post = new THREE.Mesh(postGeometry, postMaterial);
+  post.position.set(scoreboardX, scoreboardY / 2, scoreboardZ);
+  post.castShadow = true;
+  scene.add(post);
+  
+  // Create the horizontal board (T top)
+  const boardGeometry = new THREE.BoxGeometry(12, 4, 1);
+  const boardMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x1a1a1a, // Dark background
+    shininess: 10
+  });
+  const board = new THREE.Mesh(boardGeometry, boardMaterial);
+  board.position.set(scoreboardX, scoreboardY + 2, scoreboardZ);
+  board.castShadow = true;
+  scene.add(board);
+  
+  // Create a border around the scoreboard
+  const borderGeometry = new THREE.BoxGeometry(12.5, 4.5, 0.8);
+  const borderMaterial = new THREE.MeshPhongMaterial({ color: 0x444444 });
+  const border = new THREE.Mesh(borderGeometry, borderMaterial);
+  border.position.set(scoreboardX, scoreboardY + 2, scoreboardZ + 0.1);
+  border.castShadow = true;
+  scene.add(border);
+  
+  // Create LED-style background panels
+  for (let i = 0; i < 4; i++) {
+    const ledPanelGeometry = new THREE.BoxGeometry(2.5, 3, 0.2);
+    const ledPanelMaterial = new THREE.MeshPhongMaterial({ 
+      color: 0x001100, // Dark green LED background
+      emissive: 0x002200
+    });
+    const ledPanel = new THREE.Mesh(ledPanelGeometry, ledPanelMaterial);
+    ledPanel.position.set(scoreboardX + (i - 1.5) * 3, scoreboardY + 2, scoreboardZ + 0.6);
+    scene.add(ledPanel);
+  }
+  
+  // Create the initial score text
+  updateScoreboardDisplay(0);
+}
+
+// NEW: Function to update scoreboard display
+function updateScoreboardDisplay(score) {
+  // Remove existing text if it exists
+  if (scoreboardTextMesh) {
+    scene.remove(scoreboardTextMesh);
+  }
+  
+  // Create a canvas to draw the text
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  canvas.width = 512;
+  canvas.height = 128;
+  
+  // Set up the text style
+  context.fillStyle = '#000000'; // Black background
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  
+  context.fillStyle = '#00FF00'; // Bright green LED color
+  context.font = 'bold 80px Arial';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  
+  // Add a glow effect
+  context.shadowColor = '#00FF00';
+  context.shadowBlur = 10;
+  
+  // Draw the score
+  const scoreText = score.toString().padStart(2, '0'); // Pad with leading zero if needed
+  context.fillText(scoreText, canvas.width / 2, canvas.height / 2);
+  
+  // Create texture from canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  
+  // Create material and mesh
+  const textMaterial = new THREE.MeshPhongMaterial({ 
+    map: texture,
+    transparent: true,
+    emissive: 0x003300, // Slight green glow
+    emissiveIntensity: 0.3
+  });
+  
+  const textGeometry = new THREE.PlaneGeometry(10, 2.5);
+  scoreboardTextMesh = new THREE.Mesh(textGeometry, textMaterial);
+  
+  // Position the text on the scoreboard
+  scoreboardTextMesh.position.set(0, 14, -30); // Slightly in front of the board
+  scene.add(scoreboardTextMesh);
+}
 
 // Create all elements
 createBasketballCourt();
@@ -510,6 +615,9 @@ function detectScoringCollision() {
             document.getElementById('currentScore').textContent = gameStats.totalScore;
             document.getElementById('totalMade').textContent = gameStats.shotsMade;
             document.getElementById('accuracy').textContent = gameStats.shootingPercentage;
+            
+            // NEW: Update scoreboard display
+            updateScoreboardDisplay(gameStats.shotsMade);
             
             ballPhysics.lastScoredTime = Date.now();
         }
