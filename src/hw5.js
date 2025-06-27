@@ -256,9 +256,19 @@ const ballPhysics = {
     horizontalDirection: 0,
     verticalDirection: 0,
     bounceCounter: 0,
-    maxBounceLimit: 7,
-    lastScoredTime: 0
+    maxBounceLimit: 9,
+    lastScoredTime: 0,
+    shotInProgress: false // NEW: Track if we're in the middle of a shot attempt
 };
+
+// NEW: Ball rotation system
+const ballRotation = {
+    previousPosition: new THREE.Vector3(0, 3, 0),
+    rotationMultiplier: 0.1
+};
+
+// NEW: Confetti system
+const confettiParticles = [];
 
 // Hoop positions for collision detection
 const hoopTargets = [
@@ -328,6 +338,23 @@ powerLevel.style.height = ballPhysics.shotStrength * 100 + '%';
 powerLevel.style.borderRadius = '0 0 1px 1px';
 powerIndicator.appendChild(powerLevel);
 
+// NEW: Celebration text display
+const celebrationText = document.createElement('div');
+celebrationText.style.position = 'absolute';
+celebrationText.style.top = '50%';
+celebrationText.style.left = '50%';
+celebrationText.style.transform = 'translate(-50%, -50%)';
+celebrationText.style.color = '#FFD700';
+celebrationText.style.fontSize = '48px';
+celebrationText.style.fontWeight = 'bold';
+celebrationText.style.textShadow = '2px 2px 4px rgba(0,0,0,0.8)';
+celebrationText.style.opacity = '0';
+celebrationText.style.zIndex = '1000';
+celebrationText.style.pointerEvents = 'none';
+celebrationText.style.transition = 'opacity 0.3s ease';
+celebrationText.innerHTML = 'SHOT MADE!';
+document.body.appendChild(celebrationText);
+
 // Game scoring system
 let totalScore = 0;
 
@@ -368,6 +395,7 @@ function launchBasketball() {
     ballPhysics.isLaunched = true;
     ballPhysics.isPlayerControlled = false;
     ballPhysics.bounceCounter = 0;
+    ballPhysics.shotInProgress = true; // NEW: Mark that we're attempting a shot
     
     // Update shot attempts
     gameStats.shotsAttempted++;
@@ -375,12 +403,23 @@ function launchBasketball() {
 }
 
 function resetBasketball() {
+    // NEW: Check if this was a missed shot and update accuracy
+    if (ballPhysics.shotInProgress) {
+        // Shot was in progress but we're resetting = missed shot
+        // (shotsMade already updated in detectScoringCollision if it was made)
+        gameStats.shootingPercentage = (gameStats.shotsMade / gameStats.shotsAttempted * 100).toFixed(1);
+        document.getElementById('accuracy').textContent = gameStats.shootingPercentage;
+        ballPhysics.shotInProgress = false;
+    }
+    
     basketball.position.set(0, 3, 0);
+    basketball.rotation.set(0, 0, 0); // Reset rotation
     ballPhysics.currentPos.set(0, 3, 0);
     ballPhysics.velocity.set(0, 0, 0);
     ballPhysics.isLaunched = false;
     ballPhysics.isPlayerControlled = true;
     ballPhysics.bounceCounter = 0;
+    ballRotation.previousPosition.set(0, 3, 0);
 }
 
 function detectScoringCollision() {
@@ -398,6 +437,9 @@ function detectScoringCollision() {
             gameStats.totalScore += 2;
             gameStats.shotsMade++;
             gameStats.shootingPercentage = (gameStats.shotsMade / gameStats.shotsAttempted * 100).toFixed(1);
+            ballPhysics.shotInProgress = false; // NEW: Shot completed successfully
+
+            celebrateShot();
             
             // Update displays
             document.getElementById('currentScore').textContent = gameStats.totalScore;
@@ -405,22 +447,80 @@ function detectScoringCollision() {
             document.getElementById('accuracy').textContent = gameStats.shootingPercentage;
             
             ballPhysics.lastScoredTime = Date.now();
-            
-            // Visual feedback
-            const originalColor = basketball.children[0].material.color.clone();
-            basketball.children[0].material.color.set(0x00ff00);
-            
-            setTimeout(() => {
-                basketball.children[0].material.color.copy(originalColor);
-            }, 500);
         }
     }
 }
 
+// NEW: Enhanced celebration function
+function celebrateShot() {
+    // Show celebration text
+    celebrationText.style.opacity = '1';
+    setTimeout(() => {
+        celebrationText.style.opacity = '0';
+    }, 2000);
+    
+    // Create confetti
+    createConfetti();
+}
+
+// NEW: Confetti creation function
+function createConfetti() {
+    const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+    
+    for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.style.position = 'absolute';
+        confetti.style.width = Math.random() * 10 + 5 + 'px';
+        confetti.style.height = confetti.style.width;
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.left = Math.random() * window.innerWidth + 'px';
+        confetti.style.top = '-10px';
+        confetti.style.opacity = '1';
+        confetti.style.borderRadius = '50%';
+        confetti.style.pointerEvents = 'none';
+        confetti.style.zIndex = '999';
+        
+        document.body.appendChild(confetti);
+        confettiParticles.push({
+            element: confetti,
+            x: parseFloat(confetti.style.left),
+            y: -10,
+            vx: (Math.random() - 0.5) * 4,
+            vy: Math.random() * 3 + 2,
+            life: 100
+        });
+    }
+}
+
+// NEW: Update confetti animation
+function updateConfetti() {
+    for (let i = confettiParticles.length - 1; i >= 0; i--) {
+        const particle = confettiParticles[i];
+        
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+        particle.vy += 0.1; // Gravity
+        particle.life--;
+        
+        particle.element.style.left = particle.x + 'px';
+        particle.element.style.top = particle.y + 'px';
+        particle.element.style.opacity = (particle.life / 100).toString();
+        
+        if (particle.life <= 0 || particle.y > window.innerHeight) {
+            document.body.removeChild(particle.element);
+            confettiParticles.splice(i, 1);
+        }
+    }
+}
+
+// ENHANCED: Physics simulation with ball rotation
 function simulatePhysics() {
     if (!ballPhysics.isLaunched) {
         // Handle manual movement when player controlled
         if (ballPhysics.horizontalDirection !== 0 || ballPhysics.verticalDirection !== 0) {
+            // Store previous position for rotation calculation
+            ballRotation.previousPosition.copy(basketball.position);
+            
             basketball.position.x += ballPhysics.horizontalDirection * 0.15;
             basketball.position.z += ballPhysics.verticalDirection * 0.15;
             
@@ -429,6 +529,16 @@ function simulatePhysics() {
             basketball.position.z = Math.max(-7, Math.min(7, basketball.position.z));
             
             ballPhysics.currentPos.copy(basketball.position);
+            
+            // NEW: Calculate rotation for manual movement
+            const movementVector = new THREE.Vector3()
+                .subVectors(basketball.position, ballRotation.previousPosition);
+            
+            if (movementVector.length() > 0) {
+                // Rotate ball based on movement direction
+                basketball.rotation.x += -movementVector.z * ballRotation.rotationMultiplier * 8;
+                basketball.rotation.z += movementVector.x * ballRotation.rotationMultiplier * 8;
+            }
         }
         return;
     }
@@ -440,9 +550,19 @@ function simulatePhysics() {
     ballPhysics.currentPos.add(ballPhysics.velocity);
     basketball.position.copy(ballPhysics.currentPos);
     
-    // Ball rotation animation
-    basketball.rotation.x += ballPhysics.velocity.z * 0.08;
-    basketball.rotation.z -= ballPhysics.velocity.x * 0.08;
+    // NEW: Enhanced ball rotation animation during flight
+    const velocityMagnitude = ballPhysics.velocity.length();
+    if (velocityMagnitude > 0) {
+        // Basketball rotation based on movement - more visible rotation
+        basketball.rotation.x += ballPhysics.velocity.z * 0.3;  // Increased from 0.1
+        basketball.rotation.z -= ballPhysics.velocity.x * 0.3;  // Increased from 0.1
+        
+        // Add backspin (common in basketball shots) - rotate around X axis
+        basketball.rotation.x += velocityMagnitude * 0.15;  // Creates backspin effect
+        
+        // Add some side spin based on horizontal movement
+        basketball.rotation.y += ballPhysics.velocity.x * 0.1;
+    }
     
     // Ground collision detection
     if (ballPhysics.currentPos.y < 1.5 && ballPhysics.velocity.y < 0) {
@@ -531,6 +651,9 @@ function animate() {
     
     // Update basketball physics
     simulatePhysics();
+    
+    // NEW: Update confetti animation
+    updateConfetti();
     
     // Update controls
     controls.enabled = isOrbitEnabled;
