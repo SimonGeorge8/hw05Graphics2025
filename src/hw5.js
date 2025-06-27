@@ -358,7 +358,7 @@ function updateScoreboardDisplay(score) {
   const textGeometry = new THREE.PlaneGeometry(10, 2.5);
   scoreboardTextMesh = new THREE.Mesh(textGeometry, textMaterial);
   
-  scoreboardTextMesh.position.set(0, 14, -30); // put text in front of the board
+  scoreboardTextMesh.position.set(0, 14, -31); // put text in front of the board
   scene.add(scoreboardTextMesh);
 }
 
