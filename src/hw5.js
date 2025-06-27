@@ -1,4 +1,5 @@
-import {OrbitControls} from './OrbitControls.js'
+// Game scoring system
+let totalScore = 0;import {OrbitControls} from './OrbitControls.js'
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -6,8 +7,8 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
-// Set background color
-scene.background = new THREE.Color(0x000000);
+// Set background color to light blue sky
+scene.background = new THREE.Color(0x87CEEB); // Sky blue
 
 // Add lights to the scene
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -45,6 +46,9 @@ function createBasketballCourt() {
   createHoop(scene, false);  //right hoop (its all about perspective tho if you really think about it)
 
   createBasketball();
+  
+  // NEW: Create stadium environment
+  createStadium();
 }
 
 function defineLines(scene){
@@ -184,6 +188,7 @@ function createHoop(target_scene, facing_right) {
 
 // create basketball
 let basketball;
+
 function createBasketball() {
   const sphere_radius = 0.75;
   const basketball_geometry = new THREE.SphereGeometry(sphere_radius, 32, 32);
@@ -222,6 +227,68 @@ function createBasketball() {
   scene.add(ball_group);
   basketball = ball_group;
 }
+
+// NEW: Create stadium environment
+function createStadium() {
+  // Large oval stadium floor (much bigger than court)
+  const stadiumFloor = new THREE.Mesh(
+    new THREE.CylinderGeometry(60, 60, 1, 32), // Large oval base
+    new THREE.MeshPhongMaterial({ color: 0x3c3c3c })
+  );
+  stadiumFloor.position.y = -0.5;
+  stadiumFloor.receiveShadow = true;
+  scene.add(stadiumFloor);
+  
+  // Create bleachers only on the SIDES (left and right of the hoops)
+  // Left side bleachers (behind left hoop)
+  for (let tier = 0; tier < 8; tier++) {
+    const seatGeometry = new THREE.BoxGeometry(2, 1, 40); // Wide, tall, long bleachers
+    const seatMaterial = new THREE.MeshPhongMaterial({ 
+      color: tier % 2 === 0 ? 0x4a5568 : 0x2d3748 // Alternating colors
+    });
+    const seats = new THREE.Mesh(seatGeometry, seatMaterial);
+    
+    seats.position.x = -20 - tier; // Positioned to the left, going outward
+    seats.position.z = 0; // Centered on court
+    seats.position.y = tier; // Rising upward
+    
+    seats.castShadow = true;
+    scene.add(seats);
+  }
+
+  for (let tier = 0; tier < 8; tier++) {
+    const seatGeometry = new THREE.BoxGeometry(40, 2, 1);
+    const seatMaterial = new THREE.MeshPhongMaterial({ 
+      color: tier % 2 === 0 ? 0x4a5568 : 0x2d3748
+    });
+    const seats = new THREE.Mesh(seatGeometry, seatMaterial);
+    
+    seats.position.x = 0; // Centered on court
+    seats.position.z = -20 - tier; // POSITIVE Z = in front of camera
+    seats.position.y = tier; // Rising upward
+    
+    seats.castShadow = true;
+    scene.add(seats);
+}
+  
+  // Right side bleachers (behind right hoop)
+  for (let tier = 0; tier < 8; tier++) {
+    const seatGeometry = new THREE.BoxGeometry(2, 1, 40);
+    const seatMaterial = new THREE.MeshPhongMaterial({ 
+      color: tier % 2 === 0 ? 0x4a5568 : 0x2d3748
+    });
+    const seats = new THREE.Mesh(seatGeometry, seatMaterial);
+    
+    seats.position.x = 20 + tier; // Positioned to the right, going outward
+    seats.position.z = 0; // Centered on court
+    seats.position.y = tier; // Rising upward
+    
+    seats.castShadow = true;
+    scene.add(seats);
+  }
+  
+}
+
 
 // Create all elements
 createBasketballCourt();
@@ -355,9 +422,6 @@ celebrationText.style.transition = 'opacity 0.3s ease';
 celebrationText.innerHTML = 'SHOT MADE!';
 document.body.appendChild(celebrationText);
 
-// Game scoring system
-let totalScore = 0;
-
 function updatePowerDisplay() {
     powerLevel.style.height = ballPhysics.shotStrength * 100 + '%';
     
@@ -409,6 +473,7 @@ function resetBasketball() {
         // (shotsMade already updated in detectScoringCollision if it was made)
         gameStats.shootingPercentage = (gameStats.shotsMade / gameStats.shotsAttempted * 100).toFixed(1);
         document.getElementById('accuracy').textContent = gameStats.shootingPercentage;
+        
         ballPhysics.shotInProgress = false;
     }
     
